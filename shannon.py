@@ -1,11 +1,9 @@
 import math
-from codinglab import PrefixCodeTree, TreeNode, PrefixEncoderDecoder
+from codinglab import PrefixCodeTree, PrefixEncoderDecoder
 
 # typing:
 from codinglab import SourceChar, ChannelChar
-from typing import Sequence, Optional, Dict, List
-from dataclasses import dataclass
-from enum import Enum
+from typing import Sequence, Dict
 
 
 """
@@ -65,7 +63,7 @@ class ShannonEncoder(PrefixEncoderDecoder[SourceChar, ChannelChar]):
         self._probabilities = probabilities
         self._base = len(channel_alphabet)
 
-        super().__init__(probabilities.keys(), channel_alphabet)
+        super().__init__(list(probabilities.keys()), channel_alphabet)
 
     def _build_prefix_code_tree(self) -> None:
         """Build Shannon prefix code tree."""
@@ -96,7 +94,12 @@ class ShannonEncoder(PrefixEncoderDecoder[SourceChar, ChannelChar]):
             # Convert cumulative probability to binary fraction
             # and take first code_length bits
             code = qrepr(cum_prob, self._base, code_length)
-            self._tree.insert_code(code, symbol)
+
+            channel_code = [
+                self._channel_alphabet[0] if bit == "0" else self._channel_alphabet[1]
+                for bit in code
+            ]
+            self._tree.insert_code(channel_code, symbol)
 
         # Build code table from tree
         self._build_table_from_tree()

@@ -1,16 +1,15 @@
 import heapq
 import math
 from codinglab import PrefixCodeTree, TreeNode, PrefixEncoderDecoder
-
-# typing:
 from codinglab import SourceChar, ChannelChar
-from typing import Sequence, Optional, Dict, List
+from typing import Optional, Dict, List
 from dataclasses import dataclass
 from enum import Enum
 
+
 class BinaryAlphabet(str, Enum):
-    zero: "0"
-    one: "1"
+    zero = "0"
+    one = "1"
 
 
 @dataclass(kw_only=True)
@@ -50,12 +49,14 @@ class BinaryHuffmanEncoder(PrefixEncoderDecoder[SourceChar, BinaryAlphabet]):
         self._frequencies = frequencies
         """Dictionary mapping source symbols to their frequencies."""
 
-        super().__init__(frequencies.keys(), ["0", "1"])
+        super().__init__(
+            list(frequencies.keys()), [BinaryAlphabet.zero, BinaryAlphabet.one]
+        )
 
     def _build_prefix_code_tree(self) -> None:
         """Build Huffman tree using the priority queue algorithm."""
         # Create leaf nodes for all symbols
-        heap = []
+        heap: List[HuffmanNode] = []
         for symbol, freq in self._frequencies.items():
             heapq.heappush(heap, HuffmanNode(freq=freq, value=symbol))
 
@@ -79,25 +80,27 @@ class BinaryHuffmanEncoder(PrefixEncoderDecoder[SourceChar, BinaryAlphabet]):
         self, huffman_node: Optional[HuffmanNode]
     ) -> PrefixCodeTree[BinaryAlphabet, SourceChar]:
         """Convert Huffman tree to prefix code tree."""
-        prefix_tree = PrefixCodeTree()
+        prefix_tree: PrefixCodeTree = PrefixCodeTree()
 
         def build_tree(
             current_huffman: HuffmanNode, current_prefix: List[BinaryAlphabet]
         ) -> None:
-            if current_huffman.symbol is not None:
-                # Leaf node: insert code
-                prefix_tree.insert_code(current_prefix, current_huffman.symbol)
+            if current_huffman.value is not None:  # Leaf node - есть символ
+                prefix_tree.insert_code(current_prefix, current_huffman.value)
             else:
-                # Internal node: traverse left (0) and right (1)
-                if current_huffman.left:
+                # Internal node - есть children
+                left_child = current_huffman.children.get("0")
+                right_child = current_huffman.children.get("1")
+
+                if left_child is not None and isinstance(left_child, HuffmanNode):
                     build_tree(
-                        current_huffman.left,
-                        current_prefix + [self._channel_alphabet[0]],
+                        left_child,
+                        current_prefix + [BinaryAlphabet.zero],
                     )
-                if current_huffman.right:
+                if right_child is not None and isinstance(right_child, HuffmanNode):
                     build_tree(
-                        current_huffman.right,
-                        current_prefix + [self._channel_alphabet[1]],
+                        right_child,
+                        current_prefix + [BinaryAlphabet.one],
                     )
 
         if huffman_node:
