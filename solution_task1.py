@@ -3,13 +3,14 @@ from collections import OrderedDict
 from enum import Enum
 import math
 
+
 class BinaryAlphabet(str, Enum):
     zero = "0"
     one = "1"
 
 
-
 EPS = 1e-9
+
 
 class ShannonFanoEliasBinaryCoder(PrefixEncoderDecoder[SourceChar, BinaryAlphabet]):
     """
@@ -45,12 +46,12 @@ class ShannonFanoEliasBinaryCoder(PrefixEncoderDecoder[SourceChar, BinaryAlphabe
                        or if any probability is non-positive
         """
         sum_prob = sum(probabilities.values())
-        if abs(sum_prob - 1.0) > EPS: 
+        if abs(sum_prob - 1.0) > EPS:
             raise ValueError("Сумма вероятностей не равна 1")
-        
+
         for prob in probabilities.values():
             if prob <= 0:
-                raise ValueError('Одна из вероятностей отрицательна')
+                raise ValueError("Одна из вероятностей отрицательна")
 
         self._probabilities = probabilities.copy()
 
@@ -62,30 +63,32 @@ class ShannonFanoEliasBinaryCoder(PrefixEncoderDecoder[SourceChar, BinaryAlphabe
 
         self._modified_cumulative = OrderedDict()
         for symbol, prob in self._probabilities.items():
-            self._modified_cumulative[symbol] = self._comulative_probs[symbol] + prob/2.0
+            self._modified_cumulative[symbol] = (
+                self._comulative_probs[symbol] + prob / 2.0
+            )
 
         self._build_prefix_code_tree()
 
-
     def _build_prefix_code_tree(self) -> None:
-        codes =  {}
+        codes = dict()
 
         for symbol, prob in self._probabilities.items():
-            code_len = - math.ceil(math.log2(prob)) + 1
-
-        
+            code_len = -math.ceil(math.log2(prob)) + 1
 
             code = ""
             current = self._modified_cumulative[symbol]
-            
+
             for _ in range(code_len):
                 current *= 2
                 bit = int(current)
                 code += str(bit)
                 current -= bit
 
-            codes[symbol] = [BinaryAlphabet.zero if bit == '0' else BinaryAlphabet.one for bit in code]
-        self._code_table = codes
+            codes[symbol] = [
+                BinaryAlphabet.zero if bit == "0" else BinaryAlphabet.one
+                for bit in code
+            ]
+        self._code_table = dict(codes)
 
     @property
     def expected_code_length(self) -> float:
@@ -96,13 +99,16 @@ class ShannonFanoEliasBinaryCoder(PrefixEncoderDecoder[SourceChar, BinaryAlphabe
             Expected number of channel symbols per source symbol,
             weighted by symbol probabilities
         """
+        if self._code_table is None:
+            return 0.0
+        if self._probabilities is None:
+            return 0.0
         expected_len = 0.0
 
         for symbol, prob in self._probabilities.items():
-            expected_len += prob * len (self.code_table[symbol])
-        
+            expected_len += prob * float(len(self._code_table[symbol]))
+
         return expected_len
-    
 
     @property
     def entropy(self) -> float:
@@ -112,7 +118,7 @@ class ShannonFanoEliasBinaryCoder(PrefixEncoderDecoder[SourceChar, BinaryAlphabe
         Returns:
             Shannon entropy in bits (for binary channel)
         """
-        
+
         entropy = 0.0
 
         for prob in self._probabilities.values():
