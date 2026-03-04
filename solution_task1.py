@@ -51,7 +51,7 @@ class ShannonFanoEliasBinaryCoder(PrefixEncoderDecoder[SourceChar, BinaryAlphabe
 
         for prob in probabilities.values():
             if prob <= 0:
-                raise ValueError("Одна из вероятностей отрицательна")
+                raise ValueError("Вероятности должны быть неотрицательны")
 
         self._probabilities = probabilities.copy()
 
