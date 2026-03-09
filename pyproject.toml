@@ -32,6 +32,9 @@ version = "0.1.0"
 description = "Library for coding experiments"
 authors = [ "Mikhail Mikhailov" ]
 
+[tool.codespell]
+ignore-words-list = "ue"
+
 [tool.mypy]
 ignore_missing_imports = true
 
